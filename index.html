@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Renaming Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #111827;
+            color: #f3f4f6;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .layout-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 70%;
+            transform: translateX(-70%);
+            z-index: 100;
+            background: #4b5563;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: white;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+
+        .layout-toggle:hover {
+            background: #6b7280;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .container.horizontal {
+            flex-direction: row;
+        }
+
+        .top-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            border-bottom: 2px solid #374151;
+        }
+
+        .container.horizontal .top-section {
+            flex: 2;
+            border-bottom: none;
+            border-left: 2px solid #374151;
+            order: 2;
+        }
+
+        .bottom-section {
+            flex: 2;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: #0f172a;
+        }
+
+        .container.horizontal .bottom-section {
+            flex: 3;
+            order: 1;
+            border-right: 2px solid #374151;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-purple {
+            background: #9333ea;
+            color: white;
+        }
+
+        .btn-purple:hover {
+            background: #7e22ce;
+        }
+
+        .btn-secondary {
+            background: #4b5563;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #6b7280;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #f87171;
+            padding: 0.5rem;
+        }
+
+        .btn-danger:hover {
+            background: #374151;
+            color: #fca5a5;
+        }
+
+        .settings-button {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .settings-button:hover {
+            background: #d97706;
+        }
+
+        .rows-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .row {
+            background: #1f2937;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .row-number {
+            background: #374151;
+            color: #93c5fd;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+        }
+
+        .row-content {
+            flex: 1;
+        }
+
+        .row-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .grip {
+            color: #6b7280;
+            cursor: grab;
+            font-size: 1.25rem;
+        }
+
+        .rule-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            background: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            color: #f3f4f6;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .rule-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .files-drop-zone {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            min-height: 80px;
+            background: #111827;
+            border: 2px dashed #4b5563;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .files-drop-zone.drag-over {
+            border-color: #3b82f6;
+            background: #1e293b;
+        }
+
+        .files-drop-zone.empty {
+            justify-content: center;
+            align-items: center;
+            color: #6b7280;
+        }
+
+        .file-chip {
+            background: #374151;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: move;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 120px;
+        }
+
+        .file-chip:hover {
+            background: #4b5563;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .file-chip.dragging {
+            opacity: 0.5;
+        }
+
+        .file-chip.selected {
+            background: #3b82f6;
+            box-shadow: 0 0 0 2px #60a5fa;
+        }
+
+        .file-thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+            background: #1f2937;
+        }
+
+        .file-preview {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #93c5fd;
+            margin-bottom: 0.25rem;
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-original {
+            font-size: 0.625rem;
+            color: #9ca3af;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .available-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            min-height: 150px;
+            background: #1f2937;
+            border: 2px dashed #4b5563;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+
+        .available-files.empty {
+            justify-content: center;
+            align-items: center;
+            color: #6b7280;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .dialog-modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dialog-modal.active {
+            display: flex;
+        }
+
+        .dialog-content {
+            background: #1f2937;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .dialog-content h3 {
+            margin-bottom: 1rem;
+            color: #93c5fd;
+        }
+
+        .dialog-content label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .dialog-content input[type="number"],
+        .dialog-content input[type="text"],
+        .dialog-content textarea {
+            width: 100%;
+            padding: 0.5rem;
+            background: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            color: #f3f4f6;
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
+
+        .dialog-content textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .dialog-content input:focus,
+        .dialog-content textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <button class="layout-toggle" onclick="toggleLayout()">⇄ Toggle Layout</button>
+    
+    <div class="container horizontal" id="mainContainer">
+    <div class="bottom-section">
+        <div class="header">
+            <h2>Rename Rules</h2>
+            <div class="button-group">
+                <button class="btn-primary" onclick="addRow()">+ Add Row</button>
+                <button class="btn-primary" onclick="openBulkAddDialog()">++ Bulk Add</button>
+                <button class="settings-button" onclick="openHorizontalNamingDialog()">⚙️ Horizontal</button>
+                <button class="btn-success" onclick="applyRename()">▶ Apply</button>
+            </div>
+        </div>
+        <div class="rows-container" id="rowsContainer">        </div>
+    </div>
+
+    <div class="top-section">
+        <div class="header">
+            <h2>Available Files</h2>
+            <div class="button-group">
+                <button class="btn-secondary" onclick="sortFiles()">↕️ Sort</button>
+                <button class="btn-secondary" onclick="loadFromDirectory()">📂 Load from Directory</button>
+                <button class="btn-purple" onclick="document.getElementById('fileInput').click()">📁 Load Files</button>
+            </div>
+            <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFileSelect(event)">
+        </div>
+        <div class="available-files empty" id="availableFiles" ondrop="dropInAvailable(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+            <div>Click "Load Files" to select images</div>
+        </div>
+    </div>
+    </div>
+
+    <div class="modal" id="imageModal" onclick="closeModal()">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <div class="dialog-modal" id="bulkAddDialog">
+        <div class="dialog-content" onclick="event.stopPropagation()">
+            <h3>Bulk Add Rows</h3>
+            <label>Number of Rows:</label>
+            <input type="number" id="bulkRowCount" min="1" value="10">
+            <label>Naming Pattern:</label>
+            <input type="text" id="bulkRowPattern" value="Set*_sd###" placeholder="e.g., Set*_sd###">
+            <div class="dialog-buttons">
+                <button class="btn-secondary" onclick="closeBulkAddDialog()">Cancel</button>
+                <button class="btn-primary" onclick="createBulkRows()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dialog-modal" id="horizontalNamingDialog">
+        <div class="dialog-content" onclick="event.stopPropagation()">
+            <h3>Horizontal Naming</h3>
+            <label>Enter suffixes (one per line):</label>
+            <textarea id="horizontalNamingList" placeholder=" Alpha
+ Beta
+ Gamma"></textarea>
+            <div class="dialog-buttons">
+                <button class="btn-secondary" onclick="closeHorizontalNamingDialog()">Cancel</button>
+                <button class="btn-success" onclick="saveHorizontalNaming()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rows = [{ id: 1, rule: 'Set_0##0*', files: [] }];
+        let availableFiles = [];
+        let draggedFile = null;
+        let draggedFrom = null;
+        let selectedFiles = new Set();
+        let horizontalNaming = [' A', ' B', ' C', ' D', ' E', ' F', ' G', ' H', ' I', ' J'];
+
+        function render() {
+            renderRows();
+            renderAvailableFiles();
+        }
+
+        function createThumbnail(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(file.file);
+            });
+        }
+
+        function renderRows() {
+            const container = document.getElementById('rowsContainer');
+            container.innerHTML = '';
+
+            rows.forEach((row, rowIndex) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+                
+                const rowContent = document.createElement('div');
+                rowContent.innerHTML = `
+                    <div class="row-number">${String(rowIndex).padStart(2, '0')}</div>
+                    <div class="row-content">
+                        <div class="row-header">
+                            <span class="grip">☰</span>
+                            <input type="text" class="rule-input" value="${row.rule}" placeholder="e.g., Set_0##0*">
+                            <button class="btn-danger">🗑️</button>
+                        </div>
+                        <div class="files-drop-zone ${row.files.length === 0 ? 'empty' : ''}" id="row-${row.id}">
+                            ${row.files.length === 0 ? '<div>Drop files here</div>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                rowDiv.appendChild(rowContent.firstElementChild);
+                rowDiv.appendChild(rowContent.lastElementChild);
+                
+                const input = rowDiv.querySelector('.rule-input');
+                input.addEventListener('change', (e) => updateRule(row.id, e.target.value));
+                
+                const deleteBtn = rowDiv.querySelector('.btn-danger');
+                deleteBtn.addEventListener('click', () => removeRow(row.id));
+                
+                container.appendChild(rowDiv);
+
+                const dropZone = document.getElementById(`row-${row.id}`);
+                dropZone.addEventListener('drop', (e) => dropInRow(e, row.id));
+                dropZone.addEventListener('dragover', allowDrop);
+                dropZone.addEventListener('dragleave', dragLeave);
+
+                row.files.forEach((file, fileIndex) => {
+                    const fileChip = document.createElement('div');
+                    fileChip.className = 'file-chip';
+                    fileChip.draggable = true;
+                    fileChip.addEventListener('dragstart', () => dragStart(file, { type: 'row', rowId: row.id }));
+                    fileChip.addEventListener('dragend', dragEnd);
+                    fileChip.addEventListener('dblclick', () => openModal(file.thumbnail));
+                    
+                    const preview = generatePreview(rowIndex, fileIndex, row.rule);
+                    fileChip.innerHTML = `
+                        <img src="${file.thumbnail}" class="file-thumbnail" alt="${file.name}">
+                        <div class="file-preview">${preview}</div>
+                        <div class="file-original">${file.name}</div>
+                    `;
+                    dropZone.appendChild(fileChip);
+                });
+            });
+        }
+
+        function renderAvailableFiles() {
+            const container = document.getElementById('availableFiles');
+            container.innerHTML = '';
+            
+            if (availableFiles.length === 0) {
+                container.className = 'available-files empty';
+                container.innerHTML = '<div>Click "Load Files" to select images</div>';
+                return;
+            }
+
+            container.className = 'available-files';
+            availableFiles.forEach(file => {
+                const fileChip = document.createElement('div');
+                fileChip.className = 'file-chip';
+                if (selectedFiles.has(file.id)) {
+                    fileChip.classList.add('selected');
+                }
+                fileChip.draggable = true;
+                fileChip.addEventListener('dragstart', (e) => dragStart(file, { type: 'available' }, e));
+                fileChip.addEventListener('dragend', dragEnd);
+                fileChip.addEventListener('dblclick', () => openModal(file.thumbnail));
+                fileChip.addEventListener('click', (e) => handleFileSelection(file.id, e));
+                fileChip.innerHTML = `
+                    <img src="${file.thumbnail}" class="file-thumbnail" alt="${file.name}">
+                    <div class="file-original">${file.name}</div>
+                `;
+                container.appendChild(fileChip);
+            });
+        }
+
+        function addRow() {
+            rows.push({ id: Date.now(), rule: 'Set_0##0*', files: [] });
+            render();
+        }
+
+        function openBulkAddDialog() {
+            document.getElementById('bulkAddDialog').classList.add('active');
+        }
+
+        function closeBulkAddDialog() {
+            document.getElementById('bulkAddDialog').classList.remove('active');
+        }
+
+        function createBulkRows() {
+            const count = parseInt(document.getElementById('bulkRowCount').value);
+            const pattern = document.getElementById('bulkRowPattern').value;
+            
+            for (let i = 0; i < count; i++) {
+                rows.push({ id: Date.now() + i, rule: pattern, files: [] });
+            }
+            
+            closeBulkAddDialog();
+            render();
+        }
+
+        function openHorizontalNamingDialog() {
+            document.getElementById('horizontalNamingList').value = horizontalNaming.join('\n');
+            document.getElementById('horizontalNamingDialog').classList.add('active');
+        }
+
+        function closeHorizontalNamingDialog() {
+            document.getElementById('horizontalNamingDialog').classList.remove('active');
+        }
+
+        function saveHorizontalNaming() {
+            const text = document.getElementById('horizontalNamingList').value;
+            horizontalNaming = text.split('\n').filter(line => line.trim() !== '');
+            if (horizontalNaming.length === 0) {
+                horizontalNaming = [' A', ' B', ' C'];
+            }
+            closeHorizontalNamingDialog();
+            render();
+        }
+
+        function removeRow(id) {
+            const row = rows.find(r => r.id === id);
+            if (row && row.files.length > 0) {
+                availableFiles.push(...row.files);
+            }
+            rows = rows.filter(r => r.id !== id);
+            render();
+        }
+
+        function updateRule(id, newRule) {
+            const row = rows.find(r => r.id === id);
+            if (row) row.rule = newRule;
+            render();
+        }
+
+        async function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileObj = {
+                    id: `${Date.now()}-${i}-${Math.random()}`,
+                    name: file.name,
+                    file: file,
+                    path: file.path || file.name, // For local files
+                    thumbnail: null
+                };
+                
+                fileObj.thumbnail = await createThumbnail(fileObj);
+                availableFiles.push(fileObj);
+            }
+            
+            render();
+            event.target.value = '';
+        }
+
+        async function loadFromDirectory() {
+            const directory = prompt('Enter directory path (leave empty for home directory):');
+            if (directory === null) return; // User cancelled
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/list-directory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ directory: directory || '' })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                // Load files
+                for (let fileInfo of data.files) {
+                    const fileObj = {
+                        id: `${Date.now()}-${Math.random()}`,
+                        name: fileInfo.name,
+                        path: fileInfo.path,
+                        thumbnail: null
+                    };
+                    
+                    // Get thumbnail from server
+                    const thumbResponse = await fetch('http://localhost:5000/api/get-file', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path: fileInfo.path })
+                    });
+                    
+                    const thumbData = await thumbResponse.json();
+                    if (thumbData.success) {
+                        fileObj.thumbnail = thumbData.data;
+                    }
+                    
+                    availableFiles.push(fileObj);
+                }
+                
+                render();
+                alert(`Loaded ${data.files.length} images from ${data.directory}`);
+            } catch (error) {
+                alert('Error connecting to server. Make sure the Python server is running on port 5000.\n\nError: ' + error.message);
+            }
+        }
+
+        function sortFiles() {
+            availableFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+            render();
+        }
+
+        function handleFileSelection(fileId, event) {
+            if (event.ctrlKey || event.metaKey) {
+                // Ctrl/Cmd click: toggle selection
+                if (selectedFiles.has(fileId)) {
+                    selectedFiles.delete(fileId);
+                } else {
+                    selectedFiles.add(fileId);
+                }
+            } else if (event.shiftKey && selectedFiles.size > 0) {
+                // Shift click: select range
+                const fileIds = availableFiles.map(f => f.id);
+                const lastSelected = Array.from(selectedFiles).pop();
+                const lastIndex = fileIds.indexOf(lastSelected);
+                const currentIndex = fileIds.indexOf(fileId);
+                
+                const start = Math.min(lastIndex, currentIndex);
+                const end = Math.max(lastIndex, currentIndex);
+                
+                for (let i = start; i <= end; i++) {
+                    selectedFiles.add(fileIds[i]);
+                }
+            } else {
+                // Regular click: select only this file
+                selectedFiles.clear();
+                selectedFiles.add(fileId);
+            }
+            
+            render();
+        }
+
+        function dragStart(file, source, event) {
+            // If dragging a selected file, drag all selected files
+            if (source.type === 'available' && selectedFiles.has(file.id)) {
+                draggedFile = availableFiles.filter(f => selectedFiles.has(f.id));
+            } else {
+                draggedFile = file;
+            }
+            draggedFrom = source;
+            event.target.classList.add('dragging');
+        }
+
+        function dragEnd() {
+            draggedFile = null;
+            draggedFrom = null;
+            document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(event) {
+            if (event.currentTarget.contains(event.relatedTarget)) return;
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function dropInRow(event, rowId) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            
+            if (!draggedFile) return;
+
+            const filesToMove = Array.isArray(draggedFile) ? draggedFile : [draggedFile];
+
+            // Remove from source
+            if (draggedFrom.type === 'available') {
+                const idsToRemove = new Set(filesToMove.map(f => f.id));
+                availableFiles = availableFiles.filter(f => !idsToRemove.has(f.id));
+                selectedFiles.clear();
+            } else {
+                const sourceRow = rows.find(r => r.id === draggedFrom.rowId);
+                if (sourceRow) {
+                    const idsToRemove = new Set(filesToMove.map(f => f.id));
+                    sourceRow.files = sourceRow.files.filter(f => !idsToRemove.has(f.id));
+                }
+            }
+
+            // Add to destination
+            const targetRow = rows.find(r => r.id === rowId);
+            if (targetRow) {
+                targetRow.files.push(...filesToMove);
+            }
+
+            render();
+        }
+
+        function dropInAvailable(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            
+            if (!draggedFile || draggedFrom.type === 'available') return;
+
+            const filesToMove = Array.isArray(draggedFile) ? draggedFile : [draggedFile];
+
+            const sourceRow = rows.find(r => r.id === draggedFrom.rowId);
+            if (sourceRow) {
+                const idsToRemove = new Set(filesToMove.map(f => f.id));
+                sourceRow.files = sourceRow.files.filter(f => !idsToRemove.has(f.id));
+            }
+
+            availableFiles.push(...filesToMove);
+            render();
+        }
+
+        function generatePreview(rowIndex, fileIndex, rowRule) {
+            const rowNum = String(rowIndex).padStart(4, '0');
+            const horizontalSuffix = horizontalNaming[fileIndex % horizontalNaming.length] || '';
+            let preview = rowRule.replace(/\*/g, horizontalSuffix);
+            preview = preview.replace(/#{2,}/g, (match) => rowNum.slice(-match.length));
+            return preview;
+        }
+
+        function applyRename() {
+            let renameList = [];
+            let operations = [];
+            
+            rows.forEach((row, rowIndex) => {
+                row.files.forEach((file, fileIndex) => {
+                    const newName = generatePreview(rowIndex, fileIndex, row.rule);
+                    renameList.push(`${file.name} → ${newName}`);
+                    
+                    if (file.path) {
+                        operations.push({
+                            oldPath: file.path,
+                            newName: newName
+                        });
+                    }
+                });
+            });
+            
+            if (renameList.length === 0) {
+                alert('No files to rename!');
+                return;
+            }
+            
+            const preview = 'Files to be renamed:\n\n' + renameList.join('\n') + '\n\nProceed with renaming?';
+            
+            if (!confirm(preview)) {
+                return;
+            }
+            
+            // If files have paths (loaded from directory), use server
+            if (operations.length > 0) {
+                performServerRename(operations);
+            } else {
+                alert('Files loaded from browser cannot be renamed. Use "Load from Directory" button to load files from your computer.');
+            }
+        }
+        
+        async function performServerRename(operations) {
+            try {
+                // Debug: log what we're sending
+                console.log('Rename operations:', operations);
+                
+                const response = await fetch('http://localhost:5000/api/rename-files', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ operations: operations })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Successfully renamed ' + data.results.length + ' files!');
+                    
+                    // Update file names and paths in the UI
+                    rows.forEach(row => {
+                        row.files.forEach(file => {
+                            const result = data.results.find(r => file.path.includes(r.old));
+                            if (result) {
+                                file.name = result.new;
+                                file.path = result.newPath;
+                            }
+                        });
+                    });
+                    
+                    render();
+                } else {
+                    alert('Errors occurred:\n\n' + data.errors.join('\n'));
+                }
+            } catch (error) {
+                alert('Error connecting to server. Make sure the Python server is running.\n\nError: ' + error.message);
+            }
+        }
+
+        function openModal(imageSrc) {
+            document.getElementById('imageModal').classList.add('active');
+            document.getElementById('modalImage').src = imageSrc;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeBulkAddDialog();
+                closeHorizontalNamingDialog();
+            }
+        });
+
+        document.getElementById('bulkAddDialog').addEventListener('click', closeBulkAddDialog);
+        document.getElementById('horizontalNamingDialog').addEventListener('click', closeHorizontalNamingDialog);
+
+        function toggleLayout() {
+            const container = document.getElementById('mainContainer');
+            container.classList.toggle('horizontal');
+        }
+
+        render();
+    </script>
+</body>
+</html>
